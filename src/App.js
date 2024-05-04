@@ -8,29 +8,38 @@ const user_list = ["Alan", "Bob", "Carol", "Dean", "Elin"];
 
 function App() {
   const [messages, setMessages] = useState([]);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     // Establish a Socket.IO connection
-    const socket = io('http://localhost:3001');
-
+    const newSocket = io('http://localhost:3001');
+    setSocket(newSocket);
 
     // Log connection status
-    socket.on('connect', () => {
+    newSocket.on('connect', () => {
       console.log('Connected to server');
     });
 
     // Log disconnection status
-    socket.on('disconnect', () => {
+    newSocket.on('disconnect', () => {
       console.log('Disconnected from server');
     });
 
     // Log connection errors
-    socket.on('error', (error) => {
+    newSocket.on('error', (error) => {
       console.error('Connection error:', error);
     });
 
+    // Subscribe to the chat channel
+    newSocket.emit('subscribeToChat');
+
+    // Listen for incoming messages
+    newSocket.on('message', (data) => {
+      setMessages(prevMessages => [...prevMessages, data]);
+    });
+
     return () => {
-      socket.disconnect(); // Clean up the socket connection on component unmount
+      newSocket.disconnect(); // Clean up the socket connection on component unmount
     };
   }, []); // Empty dependency array ensures this effect runs only once, similar to componentDidMount
 
@@ -43,7 +52,8 @@ function App() {
       content: messageContent,
       likes: 0,
     };
-    setMessages([...messages, newMessage]);
+    // Publish message to the chat channel
+    socket.emit('publishToChat', newMessage);
   };
 
   const handleLike = (id) => {
