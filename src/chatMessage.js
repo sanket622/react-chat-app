@@ -5,24 +5,30 @@ import io from 'socket.io-client';
 const ChatMessage = ({ message, onLike }) => {
   const { user, content, id } = message;
   const [likeCount, setLikeCount] = useState(message.likes);
+  const socket = io(); // Establish a Socket.IO connection
+
+  const handleLikeClick = () => {
+    // Increment like count locally
+    setLikeCount(prevCount => prevCount + 1);
+  
+    // Emit a 'like' event to the server with the message ID
+    socket.emit('like', id);
+  };
+  
 
   useEffect(() => {
-    const socket = io();
-
     // Listen for updates to the like count for this message
-    socket.on(`likeCountUpdate_${id}`, (newLikeCount) => {
-      setLikeCount(newLikeCount);
+    socket.on('likeCountUpdate', (updatedMessage) => {
+      if (updatedMessage.id === id) {
+        // Update the like count locally
+        setLikeCount(updatedMessage.likes);
+      }
     });
 
     return () => {
-      socket.disconnect(); // Clean up the socket connection on component unmount
+      socket.off('likeCountUpdate'); // Remove the listener on component unmount
     };
-  }, [id]);
-
-  const handleLikeClick = () => {
-    const socket = io();
-    socket.emit('like', id); // Send a like event to the server
-  };
+  }, [id, socket]);
 
   return (
     <div className="chat-message">

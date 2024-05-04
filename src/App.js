@@ -56,21 +56,11 @@ function App() {
     socket.emit('publishToChat', newMessage);
   };
 
-  const handleLike = (id) => {
-    const updatedMessages = messages.map(message => {
-      if (message.id === id) {
-        return { ...message, likes: message.likes + 1 };
-      }
-      return message;
-    });
-    setMessages(updatedMessages);
-  };
-
   return (
     <div className="App">
       <div className="chat-container">
         {messages.map(message => (
-          <ChatMessage key={message.id} message={message} onLike={handleLike} />
+          <ChatMessage key={message.id} message={message} />
         ))}
       </div>
       <ChatInput onSend={handleMessageSend} />
